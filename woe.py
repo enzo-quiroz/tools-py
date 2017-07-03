@@ -47,7 +47,7 @@ class WoE:
         stat['p_good'] = np.maximum(stat['good'] / t_good, self.byzero)
         stat['p_bad'] = np.maximum(stat['bad'] / t_bad, self.byzero)
         stat['p_obs'] = stat['obs'] / t_obs
-        stat['PD'] = stat['bad'] / t_obs
+        stat['PD'] = stat['bad'] / stat['obs']
         
         stat['woe'] = np.log(stat['p_good'] / stat['p_bad'])
 
@@ -59,21 +59,21 @@ class WoE:
     def _estimatedtime(self, starttime, endtime, n):
         print('Se estima que acabará a las: ', str(starttime+(endtime-starttime)*n), '\n')
         
-    #Aun no implementado del todo, verificar si pd.cut genera ya los percentiles
     def _getLabels(self, x, breaks):
-        if type(breaks) == 'list':
+        if isinstance((breaks),list):
             _breaks = breaks
-        elif x.dtype.name != 'object':
+        elif x.dtype.name != 'object' and x.dtype.name != 'category':
             _breaks = np.unique(np.percentile(x[np.logical_not(x.isnull().values)], np.arange(breaks+1)*100/breaks))
-        if x.dtype.name != 'object':
-            labels = pd.cut(x, bins = _breaks)
+        if x.dtype.name != 'object' and x.dtype.name != 'category':
+            labels = pd.cut(x, bins = _breaks, include_lowest=True)
+        if x.dtype.name != 'category':
+            labels = x.copy()
         else:
             labels = x.astype('category')
         return (labels)
     
     def top(self, n=np.nan, ivmin=np.nan, ivmax=np.nan, part='names'):
         if np.isnan(n) and np.isnan(ivmin) and np.isnan(ivmax ):
-            print('aji')
             raise ValueError("No se ha escogido criterio de seleción. Especificar alguno de los parámetros n, ivmin o ivmax")
         _n = n
         if n>self.n:
@@ -90,3 +90,21 @@ class WoE:
                         ][0:_n]['Variable'].tolist()
         else:
             return 0
+        
+    def plot(self, x, season = np.nan, breaks = None):
+        if breaks is None:
+            _x = self.x[x]
+        else:
+            _x = self._getLabels(self.x[x], breaks)
+    
+        df = pd.DataFrame({'X':_x, 'Y':self.y})
+        p = df.groupby('X')['Y'].agg([np.size, np.sum]).rename(columns = {'size':'Total', 'sum':'Bad'})
+        p['R'] = p['Bad'] / p['Total']
+        if np.isnan(season):
+            p['R'].plot()
+        else:
+            p['R'].plot().xaxis.set_ticks(np.arange(np.min(self.x[x]), np.max(self.x[x]), season))
+        return
+    def copy(self):
+        print(self.iv)
+        self.stat[0].to_clipboard()
