@@ -20,16 +20,19 @@ class WoE:
         
         self.starttime = datetime.now()
         for i in range(self.n): 
-            _iv, _stat, _obs = self.woe(x = self.x[self.vars[i]], y = self.y, breaks = self.breaks)
-            if not np.isnan(_iv):
-                self.iv = self.iv.append({'Variable': self.vars[i], 'IV': _iv, 'Valid obs': _obs}, ignore_index=True)[['Variable','IV', 'Valid obs']]
-                self.stat.append(_stat)
-            if i==0:
-                self._estimatedtime(self.starttime, datetime.now(), self.n)
-            if echo:
-                print(self.vars[i],': ', _iv)
-            if echo_type == 'stat':
-                print(_stat[['good','bad','obs','PD','woe']], '\n')
+            if self.x[self.vars[i]].size - sum(self.x[self.vars[i]].isnull()) > 0:
+                _iv, _stat, _obs = self.woe(x = self.x[self.vars[i]], y = self.y, breaks = self.breaks)
+                if not np.isnan(_iv):
+                    self.iv = self.iv.append({'Variable': self.vars[i], 'IV': _iv, 'Valid obs': _obs}, ignore_index=True)[['Variable','IV', 'Valid obs']]
+                    self.stat.append(_stat)
+                if i==0:
+                    self._estimatedtime(self.starttime, datetime.now(), self.n)
+                if echo:
+                    print(self.vars[i],': ', _iv)
+                if echo_type == 'stat':
+                    print(_stat[['good','bad','obs','PD','woe']], '\n')
+            else:
+                Print(self.vars[i], 'es Nulo')
         self.iv = self.iv.sort_values('IV', ascending = False)
         self.endtime = datetime.now()
         print('Se ejecutó en: ', str(self.endtime-self.starttime))
@@ -65,7 +68,10 @@ class WoE:
         elif x.dtype.name != 'object' and x.dtype.name != 'category':
             _breaks = np.unique(np.percentile(x[np.logical_not(x.isnull().values)], np.arange(breaks+1)*100/breaks))
         if x.dtype.name != 'object' and x.dtype.name != 'category':
-            labels = pd.cut(x, bins = _breaks, include_lowest=True)
+            if _breaks.size > 1:
+                labels = pd.cut(x, bins = _breaks, include_lowest=True)
+            else:
+                labels = x
         if x.dtype.name != 'category':
             labels = x.copy()
         else:
