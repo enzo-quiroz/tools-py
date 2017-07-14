@@ -1,4 +1,5 @@
 from sklearn.preprocessing import LabelEncoder
+import pandas as pd
 import numpy as np
 
 class DataSet(object):
@@ -23,6 +24,8 @@ class DataSet(object):
             if data.dtypes == 'object' :
                 le = LabelEncoder()
                 data = le.fit_transform(data)
+            else:
+                data = data.values
             return data
         else :
             var_to_mod = data.columns[data.dtypes == 'object']
@@ -72,4 +75,3 @@ class DataSet(object):
              self._index_in_epoch += batch_size
              end = self._index_in_epoch
              return self._x[start:end], self._y[start:end]
-        
