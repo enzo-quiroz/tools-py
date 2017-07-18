@@ -3,11 +3,14 @@ import pandas as pd
 import numpy as np
 
 class DataSet(object):
-    def __init__(self, x, y, seed = None):
+    def __init__(self, x, y, seed = None, factores = None):
         np.random.seed(1 if seed is None else seed)
         self._cases = x.shape[0]
         self._x = self.encode(x)
-        self._y = self.encode(y)
+        if factores == None:
+            self._y = self.encode(y)
+        else:
+            self._y = self.factor_a_matriz(self.encode(y), factores)
         self._epochs_completed = 0
         self._index_in_epoch = 0
         
@@ -41,7 +44,19 @@ class DataSet(object):
     def decode(self, data):
         #To do
         return None
-
+    
+    def factor_a_matriz(self, df, factores):
+            df_ = df
+            if isinstance(df, pd.Series):
+                df_ = df.values
+            if df_.shape[0] == df_.size:
+                casos = df_.shape[0]
+                indices = np.arange(casos) * factores 
+                factores_uno = np.zeros((casos, factores))
+                factores_uno.flat[indices + df_.ravel()] = 1 #En cada factor mas el único valor de la etiqueta coloca un 1
+                return factores_uno
+            else:
+                return df_
     
     def next_batch(self, batch_size, random = True):
         start = self._index_in_epoch
