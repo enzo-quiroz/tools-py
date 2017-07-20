@@ -16,7 +16,7 @@ class WoE:
         self.iv = pd.DataFrame()
         self.n = len(x)
         #creo una lista vacia
-        self.stat = []
+        self.stat = pd.DataFrame()
         
         self.starttime = datetime.now()
         for i in range(self.n): 
@@ -24,7 +24,7 @@ class WoE:
                 _iv, _stat, _obs = self.woe(x = self.x[self.vars[i]], y = self.y, breaks = self.breaks)
                 if not np.isnan(_iv):
                     self.iv = self.iv.append({'Variable': self.vars[i], 'IV': _iv, 'Valid obs': _obs}, ignore_index=True)[['Variable','IV', 'Valid obs']]
-                    self.stat.append(_stat)
+                    self.stat = self.stat.append(_stat)
                 if i==0:
                     self._estimatedtime(self.starttime, datetime.now(), self.n)
                 if echo:
