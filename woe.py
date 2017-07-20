@@ -15,8 +15,9 @@ class WoE:
         self.breaks = breaks
         self.iv = pd.DataFrame()
         self.n = len(x)
-        #creo una lista vacia
-        self.stat = pd.DataFrame()
+        #creo una lista vacia, es necesario que sea un lista para guardar todos los stats de X como dataframe, 
+        #para acceder a cada uno se debe usar la lista. Ejemplo: x.stat[0], x.stat[1], y castearla como dataframe.
+        self.stat = []
         
         self.starttime = datetime.now()
         for i in range(self.n): 
@@ -24,7 +25,7 @@ class WoE:
                 _iv, _stat, _obs = self.woe(x = self.x[self.vars[i]], y = self.y, breaks = self.breaks)
                 if not np.isnan(_iv):
                     self.iv = self.iv.append({'Variable': self.vars[i], 'IV': _iv, 'Valid obs': _obs}, ignore_index=True)[['Variable','IV', 'Valid obs']]
-                    self.stat = self.stat.append(_stat)
+                    self.stat.append(_stat)
                 if i==0:
                     self._estimatedtime(self.starttime, datetime.now(), self.n)
                 if echo:
@@ -72,7 +73,7 @@ class WoE:
                 labels = pd.cut(x, bins = _breaks, include_lowest=True)
             else:
                 labels = x
-        if x.dtype.name != 'category':
+        elif x.dtype.name != 'category':
             labels = x.copy()
         else:
             labels = x.astype('category')
