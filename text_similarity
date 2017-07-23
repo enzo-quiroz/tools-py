@@ -1,0 +1,83 @@
+import numpy as np
+import math
+
+
+class text_similarity(Object):
+    def __init__(self, w1, w2):
+        self._w1 = w1,
+        self._w2 = w2
+        self.d = np.nan
+        
+    def sigmoid(x):
+        return 1 / (1 + math.exp(-x))
+    
+    def text_to_number(text):
+        text_number = np.zeros(len(text.shape)])
+        for i in range(text_number.shape[0]):
+                text_number[i] = ord(text[i])-96
+        return text_number
+    
+    def probability(w1, w2):
+        if len(w1) <= len(w2):
+            _w1 = w1
+            _w2 = w2
+        else:
+            _w1 = w2
+            _w2 = w1
+        _lw1 = len(_w1)
+        _lw2 = len(_w2)
+        matrix_number = np.zeros([1, _lw2])
+        matrix_number = np.vstack([matrix_number, text_to_number(_w2)])
+        _w1_tn = text_to_number(_w1)
+        for i in range(_lw1):
+            matrix_number[0,i]=_w1_tn[i]
+        
+        test_matrix = np.zeros([2*_lw2+1,_lw1 + 2*_lw2+1])
+        for i in range(_lw1+1):
+            test_matrix[0,i+_lw2] = d[0][i]
+        for i in range(_lw2+1):
+            for j in range(2*_lw2):
+                test_matrix[j+1,i+j] = d[1][i]
+        square = np.nan
+        pos = 0
+        v1 = test_matrix[:][0]
+        for i in range(2*_lw2):
+            v2=test_matrix[:][i+1]
+            _square = np.square(v1-v2).sum()
+            if not(square < _square):
+                pos=i+1
+                square=_square
+
+    def probability(w1, w2):
+        if len(w1) <= len(w2):
+            _w1 = w1
+            _w2 = w2
+        else:
+            _w1 = w2
+            _w2 = w1
+        _lw1 = len(_w1)
+        _lw2 = len(_w2)
+        matrix_number = np.zeros([1, _lw2])
+        matrix_number = np.vstack([matrix_number, text_to_number(_w2)])
+        _w1_tn = text_to_number(_w1)
+        for i in range(_lw1):
+            matrix_number[0,i]=_w1_tn[i]
+        
+        test_matrix = np.zeros([_lw1 + _lw2, _lw1 + 2*_lw2 - 2])
+        print(test_matrix.shape)
+        for i in range(_lw1):
+            test_matrix[0,i+_lw2-1] = matrix_number[0][i]   
+        for i in range(_lw2):
+            for j in range(_lw1 + _lw2 - 1):
+                test_matrix[j+1,i+j] = matrix_number[1][i]
+        square = np.nan
+        pos = 0
+        v1 = test_matrix[:][0]
+        for i in range(_lw1 + _lw2 - 1):
+            v2=test_matrix[:][i+1]
+            _square = np.square(v1-v2).sum()
+            if not(square < _square):
+                pos=i+1
+                equals = np.count_nonzero((v1-v2==0) & ~(v1==0) & ~(v2==0))
+                square=_square
+        return equals / _lw1
