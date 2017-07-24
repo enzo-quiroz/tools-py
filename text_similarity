@@ -2,89 +2,102 @@ import numpy as np
 import math
 import pandas as pd
 
+   
+def text_to_number(text):
+    text_number = np.zeros(len(text))
+    for i in range(text_number.shape[0]):
+            text_number[i] = ord(text[i])-96
+    return text_number
 
-class text_similarity(Object):
-    def __init__(self, w1, w2):
-        self._w1 = w1,
-        self._w2 = w2
-        self.prob = self.probability(w1, w2)
-        self._primitive_word = 
-        
-    def sigmoid(x):
-        return 1 / (1 + math.exp(-x))
+def get_best_primitive(primitive):    
+    _primitive = primitive[0]
+    results = pd.DataFrame(columns = ['Inicio','Fin','Largo'])
+    _inicio = 0
+    for i in range(_primitive.shape[0]):
+         if i > 0:
+             if _primitive[i]-a > 1:
+               _fin = i
+               result_ = pd.DataFrame({'Inicio':[_inicio], 'Fin':[_fin], 'Largo':[_fin - _inicio]}, index = None)
+               results = results.append(result_)
+               _inicio = i
+         a = _primitive[i]
+    _fin = _primitive.shape[0]
+    result_ = pd.DataFrame({'Inicio':[_inicio],'Fin':[_fin],'Largo':[_fin-_inicio]}, index = None)
+    results = results.append(result_)
+    results = results.reset_index(drop=True)
+    results = results.loc[results['Largo']==results['Largo'].max()][0:].copy()
+    return (_primitive[results['Inicio'].values[0]:results['Fin'].values[0]])
+
+def probability(w1, w2):
+    if len(w1) <= len(w2):
+        _w1 = w1
+        _w2 = w2
+    else:
+        _w1 = w2
+        _w2 = w1
+    _lw1 = len(_w1)
+    _lw2 = len(_w2)
+    matrix_number = np.zeros([1, _lw2])
+    matrix_number = np.vstack([matrix_number, text_to_number(_w2)])
+    _w1_tn = text_to_number(_w1)
+    for i in range(_lw1):
+        matrix_number[0,i]=_w1_tn[i]
     
-    def text_to_number(self, text):
-        text_number = np.zeros(len(text.shape)])
-        for i in range(text_number.shape[0]):
-                text_number[i] = ord(text[i])-96
-        return text_number
-    
-    def get_best_primitive(self, primitive):    
-        _primitive = primitive[0]
-        results = pd.DataFrame(columns = ['Inicio','Fin','Largo'])
-        _inicio = 0
-        for i in range(_primitive.shape[0]):
-             if i > 0:
-                 if _primitive[i]-a > 1:
-                   _fin = i-1
-                   result_ = pd.DataFrame({'Inicio':[_inicio], 'Fin':[_fin], 'Largo':[_fin - _inicio]}, index = None)
-                   results = results.append(result_)
-                   _inicio = i
-             a = _primitive[i]
-        _fin = _primitive.shape[0]
-        result_ = pd.DataFrame({'Inicio':[_inicio],'Fin':[_fin],'Largo':[_fin-_inicio]}, index = None)
-        results = results.append(result_)
-        results = results.reset_index(drop=True)
-        results = results.loc[results['Largo']==results['Largo'].max()][0:].copy()
-        return (_primitive[results['Inicio'].values[0]:results['Fin'].values[0]])
-
-    def probability(self, w1, w2):
-        if len(w1) <= len(w2):
-            _w1 = w1
-            _w2 = w2
-        else:
-            _w1 = w2
-            _w2 = w1
-        _lw1 = len(_w1)
-        _lw2 = len(_w2)
-        matrix_number = np.zeros([1, _lw2])
-        matrix_number = np.vstack([matrix_number, text_to_number(_w2)])
-        _w1_tn = text_to_number(_w1)
-        for i in range(_lw1):
-            matrix_number[0,i]=_w1_tn[i]
+    test_matrix = np.zeros([_lw1 + _lw2, _lw1 + 2*_lw2 - 2])
+    for i in range(_lw1):
+        test_matrix[0,i+_lw2-1] = matrix_number[0][i]   
+    for i in range(_lw2):
+        for j in range(_lw1 + _lw2 - 1):
+            test_matrix[j+1,i+j] = matrix_number[1][i]
+    square = np.nan
+    primitive = np.nan
+    #_original_primitive = np.nan
+    pos = 0
+    v1 = test_matrix[:][0]
+    for i in range(_lw1 + _lw2 - 1):
+        v2=test_matrix[:][i+1]
+        _square = np.count_nonzero(v1-v2==0)
+        #print('Fila '+str(i)+ ": " + str(_square))
+        if not(square > _square):
+            pos=i+1 -_lw2
+            equals = np.count_nonzero((v1-v2==0) & ~(v1==0) & ~(v2==0))
+            #_original_primitive = np.nonzero((v1-v2==0) & ~(v1==0) & ~(v2==0))
+            primitive = get_best_primitive(np.nonzero((v1-v2==0) & ~(v1==0) & ~(v2==0)))
+            square=_square
+    if equals > 2:
+        #Prefijos
+        prefijo1 = ''
+        prefijo2 = ''
+        if pos < 0:
+            if primitive[0] >=_lw2:
+                prefijo1 = _w1[:][0:primitive[0] - pos - _lw2]
+                
+            prefijo2 = _w2[:][0:primitive[0] - _lw2 - pos + 1]
+            
+        #Sufijos
+#        if ~(equals == _lw2):
+#            sufijo2 = _w2[:][primitive[primitive.shape[0]-1] - pos - _lw1 + 1:_lw2]
+#            print("s2: "+ sufijo2)
+        base = _w1[:][0:primitive[primitive.shape[0]-1] - _lw2+2]
+        base = base.replace(prefijo1, '',1)
         
-        test_matrix = np.zeros([_lw1 + _lw2, _lw1 + 2*_lw2 - 2])
-        for i in range(_lw1):
-            test_matrix[0,i+_lw2-1] = matrix_number[0][i]   
-        for i in range(_lw2):
-            for j in range(_lw1 + _lw2 - 1):
-                test_matrix[j+1,i+j] = matrix_number[1][i]
-        square = np.nan
-        primitive = np.nan
-        pos = 0
-        v1 = test_matrix[:][0]
-        for i in range(_lw1 + _lw2 - 1):
-            v2=test_matrix[:][i+1]
-            _square = np.count_nonzero(v1-v2==0)
-            #print('Fila '+str(i)+ ": " + str(_square))
-            if not(square > _square):
-                pos=i+1 -_lw2
-                equals = np.count_nonzero((v1-v2==0) & ~(v1==0) & ~(v2==0))
-                primitive = get_best_primitive(np.nonzero((v1-v2==0) & ~(v1==0) & ~(v2==0)))
-                square=_square
-        if equals > 2:
-            if pos < 0:
-                if primitive[0] >=_lw2-1:
-                    prefijo1 = _w1[:][0:primitive[0] - pos - _lw2]
-                    print("p1: " + prefijo1)
-                prefijo2 = _w2[:][0:primitive[0] - _lw2 - pos + 1]
-                print ("p2: " + prefijo2)
-        print("W1: "+_w1 + ", W2: "+_w2)
-        print("Primitive: "+ str(primitive[0]))
-        print("Pos: " + str(pos))
-        print("Equals: "+ str(equals))
-        print("Size text 2: " + str(_lw2))
-
-        if equal<3 :
-            equals = 0
-        return equals / _lw1
+        sufijo1 = _w1.replace(prefijo1, '', 1).replace(base, '', 1)
+        sufijo2 = _w2.replace(prefijo2, '', 1).replace(base, '', 1)
+        #if base.replace(p1, '',1) = base.replace(p2, '',1)
+    print("W1: "+_w1 + ", W2: "+_w2)    
+    print("p1: " + prefijo1)
+    print ("p2: " + prefijo2)
+    print("Base: "+base)     
+    print("p1: " + sufijo1)
+    print ("p2: " + sufijo2)       
+    
+    #print("Primitive ini: "+ str(primitive[0]))
+    #print("Primitive end: "+ str(primitive[primitive.shape[0]-1]))
+    #print("Pos: " + str(pos))
+    #print("Equals: "+ str(equals))
+    #print("Size text 2: " + str(_lw2))
+    
+    if equals<3 :
+        equals = 0
+    #return equals / _lw1
+    return primitive
