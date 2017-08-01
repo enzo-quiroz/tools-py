@@ -7,7 +7,9 @@ __author__ = 'Enzo Quiroz'
 class WoE:
     def __init__(self, data, x, y, breaks=None, echo=False, echo_type='none', byzero = 0.001):
         # x: debe ser una lista, ejem: x=[col1, col2, col3], x=[col1]
-        
+        # breaks: esta variable debe espeficiarse
+        if breaks == None:
+            raise ValueError("Variable breaks no especificado")
         self.vars = x
         self.byzero = byzero
         self.x = data[x].copy()
@@ -64,15 +66,19 @@ class WoE:
         print('Se estima que acabará a las: ', str(starttime+(endtime-starttime)*n), '\n')
         
     def _getLabels(self, x, breaks):
-        if isinstance((breaks),list):
+        if isinstance(breaks,list):
             _breaks = breaks
         elif x.dtype.name != 'object' and x.dtype.name != 'category':
             _breaks = np.unique(np.percentile(x[np.logical_not(x.isnull().values)], np.arange(breaks+1)*100/breaks))
         if x.dtype.name != 'object' and x.dtype.name != 'category':
-            if _breaks.size > 1:
-                labels = pd.cut(x, bins = _breaks, include_lowest=True)
+            if isinstance(_breaks,list):
+                if len(_breaks) > 1:
+                    labels = pd.cut(x, bins = _breaks, include_lowest=True)
             else:
-                labels = x
+                if _breaks.size > 1:
+                    labels = pd.cut(x, bins = _breaks, include_lowest=True)
+                else:
+                    labels = x
         elif x.dtype.name != 'category':
             labels = x.copy()
         else:
