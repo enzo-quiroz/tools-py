@@ -42,6 +42,7 @@ class WoE:
     
     def woe(self, x, y, breaks):
         df = pd.DataFrame({"X": x, "Y": y, 'order': np.arange(x.size)})
+        df.dropna(inplace=True)
         df['labels'] = self._getLabels(x, breaks)
         col_names = {'count_nonzero':'bad', 'size':'obs'}
         stat = df.groupby('labels')['Y'].agg([np.count_nonzero, np.size]).rename(columns = col_names).copy()
@@ -63,7 +64,7 @@ class WoE:
         return iv, stat, t_obs
     
     def _estimatedtime(self, starttime, endtime, n):
-        print('Se estima que acabará a las: ', str(starttime+(endtime-starttime)*n), '\n')
+        print('Se inició a las :',str(starttime),'. Se estima que acabará a las: ', str(starttime+(endtime-starttime)*n), '\n')
         
     def _getLabels(self, x, breaks):
         if isinstance(breaks,list):
