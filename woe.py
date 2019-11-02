@@ -5,7 +5,7 @@ from datetime import datetime
 __author__ = 'Enzo Quiroz'
 
 class WoE:
-    def __init__(self, data, x, y, breaks=None, echo=False, echo_type='none', byzero = 0.001):
+    def __init__(self, data, x, y, breaks=None, echo=False, echo_type='none', byzero = 0.001, inv=False, unique_limit = 20):
         # x: debe ser una lista, ejem: x=[col1, col2, col3], x=[col1]
         # breaks: esta variable debe espeficiarse
         if breaks == None:
@@ -13,7 +13,14 @@ class WoE:
         self.vars = x
         self.byzero = byzero
         self.x = data[x].copy()
-        self.y = data[y].copy()
+        self.unique_limit = unique_limit
+        #self.y = data[y].copy() v0
+        #v1
+        if inv: 
+          self.y = 1-data[y]
+        else:
+          self.y = data[y].copy()
+        #v1
         self.breaks = breaks
         self.iv = pd.DataFrame()
         self.n = len(x)
@@ -43,7 +50,7 @@ class WoE:
     def woe(self, x, y, breaks):
         df = pd.DataFrame({"X": x, "Y": y, 'order': np.arange(x.size)})
         df.dropna(inplace=True)
-        df['labels'] = self._getLabels(x, breaks)
+        df['labels'] = self._getLabels(df['X'], breaks)
         col_names = {'count_nonzero':'bad', 'size':'obs'}
         stat = df.groupby('labels')['Y'].agg([np.count_nonzero, np.size]).rename(columns = col_names).copy()
         stat['good'] = stat['obs'] - stat['bad']
@@ -70,7 +77,11 @@ class WoE:
         if isinstance(breaks,list):
             _breaks = breaks
         elif x.dtype.name != 'object' and x.dtype.name != 'category':
-            _breaks = np.unique(np.percentile(x[np.logical_not(x.isnull().values)], np.arange(breaks+1)*100/breaks))
+            if np.unique(x).size <= self.unique_limit:
+              x = x.astype('category')
+              _breaks = np.unique(x)
+            else:
+              _breaks = np.unique(np.percentile(x[np.logical_not(x.isnull().values)], np.arange(breaks+1)*100/breaks))
         if x.dtype.name != 'object' and x.dtype.name != 'category':
             if isinstance(_breaks,list):
                 if len(_breaks) > 1:
